@@ -73,6 +73,13 @@
     Click a piece to select it, then click the board to place it.
   </div>
 
+  <!-- Floating action bar for selected piece (mobile-friendly) -->
+  <div id="piece-actions" class="piece-actions hidden">
+    <button id="btn-action-rotate" class="action-btn" title="Rotate">&#x21bb;</button>
+    <button id="btn-action-flip" class="action-btn" title="Flip">&#x2194;</button>
+    <button id="btn-action-cancel" class="action-btn action-cancel" title="Cancel">&#x2715;</button>
+  </div>
+
   <script type="module" src="game.js"></script>
 </body>
 </html>

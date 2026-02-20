@@ -127,6 +127,11 @@ const els = {
   prevChallengeBtn: null,
   nextChallengeBtn: null,
   timerValue: null,
+  // Floating action bar
+  pieceActions: null,
+  actionRotateBtn: null,
+  actionFlipBtn: null,
+  actionCancelBtn: null,
 };
 
 // ── Drag State ──────────────────────────────────────────────
@@ -434,6 +439,16 @@ function hideGhost() {
   els.ghost.style.display = 'none';
 }
 
+// ── Floating Action Bar ─────────────────────────────────────
+
+function showPieceActions() {
+  if (els.pieceActions) els.pieceActions.classList.remove('hidden');
+}
+
+function hidePieceActions() {
+  if (els.pieceActions) els.pieceActions.classList.add('hidden');
+}
+
 // ── Board Preview ───────────────────────────────────────────
 
 function anchoredOrigin(hoverCol, hoverRow) {
@@ -550,6 +565,7 @@ function selectPiece(pieceId) {
   cacheAnchorPixels();
   updateGhostShape();
   updateTrayDisplay();
+  showPieceActions();
   updateStatus(`Piece ${pieceId} selected \u2014 click board to place, R to rotate, F to flip`);
 }
 
@@ -564,6 +580,7 @@ function selectPieceWithOrientation(pieceId, orientationIndex, anchorCol, anchor
   cacheAnchorPixels();
   updateGhostShape();
   updateTrayDisplay();
+  showPieceActions();
 }
 
 function deselectPiece() {
@@ -572,6 +589,7 @@ function deselectPiece() {
   state.mode = 'idle';
   _lastHoverCol = _lastHoverRow = -1;
   hideGhost();
+  hidePieceActions();
   clearBoardPreview();
   updateTrayDisplay();
   updateStatus(state.gameMode === 'challenge'
@@ -1177,6 +1195,12 @@ function init() {
   els.nextChallengeBtn = document.getElementById('btn-next-challenge');
   els.timerValue = document.getElementById('timer-value');
 
+  // Floating action bar
+  els.pieceActions = document.getElementById('piece-actions');
+  els.actionRotateBtn = document.getElementById('btn-action-rotate');
+  els.actionFlipBtn = document.getElementById('btn-action-flip');
+  els.actionCancelBtn = document.getElementById('btn-action-cancel');
+
   // Load saved progress
   loadProgress();
 
@@ -1229,6 +1253,25 @@ function init() {
   // P1: Challenge navigation
   els.prevChallengeBtn.addEventListener('click', () => navigateChallenge(-1));
   els.nextChallengeBtn.addEventListener('click', () => navigateChallenge(1));
+
+  // Floating action bar buttons
+  els.actionRotateBtn.addEventListener('click', (e) => { e.stopPropagation(); rotateSelected(); });
+  els.actionFlipBtn.addEventListener('click', (e) => { e.stopPropagation(); flipSelected(); });
+  els.actionCancelBtn.addEventListener('click', (e) => { e.stopPropagation(); deselectPiece(); });
+
+  // Prevent action bar touches from propagating to board
+  els.pieceActions.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+  // Double-tap on board to rotate selected piece (mobile-friendly)
+  let _lastTapTime = 0;
+  els.boardGrid.addEventListener('click', (e) => {
+    const now = Date.now();
+    if (now - _lastTapTime < 350 && state.selected) {
+      rotateSelected();
+      e.stopPropagation();
+    }
+    _lastTapTime = now;
+  }, true); // capture phase so it runs before handleBoardClick
 
   console.log('[game.js] IQ Puzzler Pro initialized!');
 }
