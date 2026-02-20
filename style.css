@@ -96,6 +96,7 @@ body {
   box-shadow:
     inset 0 2px 8px rgba(0, 0, 0, 0.5),
     0 4px 20px rgba(0, 0, 0, 0.3);
+  touch-action: none; /* prevent page scroll when touching the board */
 }
 
 /* ── Board Cell ────────────────────────────────────────── */
@@ -698,6 +699,8 @@ body {
   .game-container {
     grid-template-columns: 1fr;
     justify-items: center;
+    gap: 12px;
+    padding: 0 12px 12px;
   }
 
   .piece-tray {
@@ -707,19 +710,87 @@ body {
 
 @media (max-width: 600px) {
   :root {
-    --cell-size: 36px;
-    --cell-gap: 3px;
-    --tray-cell-size: 20px;
+    --cell-size: 30px;
+    --cell-gap: 2px;
+    --tray-cell-size: 16px;
+    --tray-cell-gap: 1px;
+    --tray-gap: 6px;
+  }
+
+  .game-header {
+    padding: 8px 12px 4px;
   }
 
   .game-header h1 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
+  }
+
+  .game-header h1 .emoji {
+    font-size: 1rem;
+    margin-right: 4px;
+  }
+
+  .game-container {
+    gap: 8px;
+    padding: 0 6px 70px; /* bottom padding for floating action bar */
+  }
+
+  .board-grid {
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  /* Sidebar: compact everything */
+  .sidebar {
+    gap: 8px;
+    width: 100%;
+  }
+
+  .mode-switcher {
+    padding: 3px;
+  }
+
+  .mode-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .challenge-panel {
+    padding: 8px 12px;
+  }
+
+  .timer-display {
+    padding: 4px 12px;
+  }
+
+  .timer-value {
+    font-size: 1.1rem;
+  }
+
+  .piece-tray {
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: 4px;
+    padding: 8px;
+  }
+
+  .tray-piece {
+    padding: 4px;
+    gap: 2px;
+  }
+
+  .tray-label {
+    font-size: 0.6rem;
+  }
+
+  .controls {
+    padding: 6px;
+    gap: 6px;
   }
 
   .controls button {
-    min-width: 60px;
-    padding: 8px 10px;
-    font-size: 0.8rem;
+    min-width: 50px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
   }
 
   /* Hide keyboard shortcut hints on touch devices */
@@ -728,24 +799,45 @@ body {
   }
 
   .status-bar {
-    font-size: 0.8rem;
-    padding: 6px 12px;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    min-height: 28px;
+  }
+
+  .piece-actions {
+    bottom: 12px;
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .action-btn {
+    width: 46px;
+    height: 46px;
+    font-size: 1.3rem;
   }
 }
 
-@media (max-width: 450px) {
+@media (max-width: 380px) {
   :root {
-    --cell-size: 28px;
+    --cell-size: 26px;
     --cell-gap: 2px;
-    --tray-cell-size: 16px;
+    --tray-cell-size: 14px;
   }
 
-  .board-grid {
-    padding: 10px;
-    border-radius: 10px;
+  .game-header {
+    padding: 6px 8px 2px;
   }
 
   .game-header h1 {
-    font-size: 1.1rem;
+    font-size: 1rem;
+  }
+
+  .board-grid {
+    padding: 6px;
+    border-radius: 8px;
+  }
+
+  .piece-tray {
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
   }
 }

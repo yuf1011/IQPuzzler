@@ -1216,6 +1216,13 @@ function init() {
   window.addEventListener('resize', refreshCachedLayout);
   window.addEventListener('scroll', refreshBoardOrigin, { passive: true });
 
+  // Prevent page scroll during touch drag on board and tray
+  document.addEventListener('touchmove', (e) => {
+    if (dragState?.isDragging || boardDragState?.isDragging || state.mode === 'selected') {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
   // Board: click to place or remove
   els.boardGrid.addEventListener('click', handleBoardClick);
 
