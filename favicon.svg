@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#1e1e3a"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </radialGradient>
+    <!-- Ball gradients -->
+    <radialGradient id="g1" cx="35%" cy="30%"><stop offset="0%" stop-color="#b8e988"/><stop offset="50%" stop-color="#78B159"/><stop offset="100%" stop-color="#2e4622"/></radialGradient>
+    <radialGradient id="g2" cx="35%" cy="30%"><stop offset="0%" stop-color="#ff6868"/><stop offset="50%" stop-color="#DC143C"/><stop offset="100%" stop-color="#580818"/></radialGradient>
+    <radialGradient id="g3" cx="35%" cy="30%"><stop offset="0%" stop-color="#8ab2ff"/><stop offset="50%" stop-color="#4169E1"/><stop offset="100%" stop-color="#1a2a5a"/></radialGradient>
+    <radialGradient id="g4" cx="35%" cy="30%"><stop offset="0%" stop-color="#fff280"/><stop offset="50%" stop-color="#FFD700"/><stop offset="100%" stop-color="#665600"/></radialGradient>
+    <radialGradient id="g5" cx="35%" cy="30%"><stop offset="0%" stop-color="#ffb0d8"/><stop offset="50%" stop-color="#FF69B4"/><stop offset="100%" stop-color="#662a48"/></radialGradient>
+    <radialGradient id="g6" cx="35%" cy="30%"><stop offset="0%" stop-color="#60e8dd"/><stop offset="50%" stop-color="#20B2AA"/><stop offset="100%" stop-color="#0d4744"/></radialGradient>
+    <!-- Highlight -->
+    <radialGradient id="hl" cx="35%" cy="30%"><stop offset="0%" stop-color="rgba(255,255,255,0.6)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="url(#bg)"/>
+  <!-- L-piece (green): 3 balls -->
+  <circle cx="14" cy="14" r="5" fill="url(#g1)"/><circle cx="12.5" cy="12" r="1.5" fill="url(#hl)"/>
+  <circle cx="25" cy="14" r="5" fill="url(#g1)"/><circle cx="23.5" cy="12" r="1.5" fill="url(#hl)"/>
+  <circle cx="25" cy="25" r="5" fill="url(#g1)"/><circle cx="23.5" cy="23" r="1.5" fill="url(#hl)"/>
+  <!-- T-piece (yellow): 3 balls top-right -->
+  <circle cx="39" cy="14" r="5" fill="url(#g4)"/><circle cx="37.5" cy="12" r="1.5" fill="url(#hl)"/>
+  <circle cx="50" cy="14" r="5" fill="url(#g4)"/><circle cx="48.5" cy="12" r="1.5" fill="url(#hl)"/>
+  <circle cx="44.5" cy="25" r="5" fill="url(#g4)"/><circle cx="43" cy="23" r="1.5" fill="url(#hl)"/>
+  <!-- S-piece (red): 3 balls middle -->
+  <circle cx="14" cy="36" r="5" fill="url(#g2)"/><circle cx="12.5" cy="34" r="1.5" fill="url(#hl)"/>
+  <circle cx="25" cy="36" r="5" fill="url(#g2)"/><circle cx="23.5" cy="34" r="1.5" fill="url(#hl)"/>
+  <circle cx="25" cy="47" r="5" fill="url(#g2)"/><circle cx="23.5" cy="45" r="1.5" fill="url(#hl)"/>
+  <!-- Square (teal): 4 balls -->
+  <circle cx="39" cy="36" r="5" fill="url(#g6)"/><circle cx="37.5" cy="34" r="1.5" fill="url(#hl)"/>
+  <circle cx="50" cy="36" r="5" fill="url(#g6)"/><circle cx="48.5" cy="34" r="1.5" fill="url(#hl)"/>
+  <circle cx="39" cy="47" r="5" fill="url(#g6)"/><circle cx="37.5" cy="45" r="1.5" fill="url(#hl)"/>
+  <circle cx="50" cy="47" r="5" fill="url(#g6)"/><circle cx="48.5" cy="45" r="1.5" fill="url(#hl)"/>
+</svg>
