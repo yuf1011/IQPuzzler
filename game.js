@@ -1206,12 +1206,12 @@ function updateChallengeUI() {
   if (!state.currentChallenge) return;
 
   const ch = state.currentChallenge;
-  els.challengeTitle.textContent = `#${ch.id} ${ch.name}`;
-  els.challengeStars.textContent = getDifficultyStars(ch.difficulty);
-
-  // Navigation buttons
   const challenges = getChallenges();
   const currentIdx = challenges.findIndex(c => c.id === ch.id);
+  els.challengeTitle.textContent = `#${ch.id} ${ch.name}`;
+  els.challengeStars.textContent = `${getDifficultyStars(ch.difficulty)}  ${currentIdx + 1}/${challenges.length}`;
+
+  // Navigation buttons
   els.prevChallengeBtn.disabled = currentIdx <= 0;
   els.nextChallengeBtn.disabled = currentIdx >= challenges.length - 1;
 

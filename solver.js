@@ -130,6 +130,77 @@ export function solve(board, availablePieceIds) {
   return null;
 }
 
+/**
+ * Solve with a specific piece ordering to explore different solution branches.
+ * Used to generate diverse challenges from distinct solutions.
+ *
+ * @param {Array<Array<string|null>>} board - Current board state
+ * @param {string[]} orderedPieceIds - Piece IDs in the order to try them
+ * @returns {Array<{pieceId, shape, col, row, orientationIndex}>|null}
+ */
+export function solveWithOrder(board, orderedPieceIds) {
+  const workBoard = cloneBoard(board);
+  const solution = [];
+
+  if (_solveOrdered(workBoard, orderedPieceIds, solution, 3)) {
+    return solution;
+  }
+  return null;
+}
+
+/**
+ * Internal solver that respects a given piece ordering.
+ * Tries pieces in the provided array order instead of Set iteration order.
+ */
+function _solveOrdered(board, remainingIds, solution, minPieceSize) {
+  const target = findFirstEmpty(board);
+  if (!target) return true;
+
+  const { col: targetCol, row: targetRow } = target;
+
+  for (let i = 0; i < remainingIds.length; i++) {
+    const pieceId = remainingIds[i];
+    const orientations = ORIENTATIONS[pieceId];
+
+    for (let oi = 0; oi < orientations.length; oi++) {
+      const shape = orientations[oi];
+
+      for (const [dc, dr] of shape) {
+        const placeCol = targetCol - dc;
+        const placeRow = targetRow - dr;
+
+        if (canPlace(board, shape, placeCol, placeRow)) {
+          placePiece(board, pieceId, shape, placeCol, placeRow);
+
+          // Remove this piece from the list
+          const newRemaining = remainingIds.slice(0, i).concat(remainingIds.slice(i + 1));
+
+          let newMin = Infinity;
+          for (const pid of newRemaining) {
+            const sz = PIECE_MAP[pid].shape.length;
+            if (sz < newMin) newMin = sz;
+          }
+          if (!isFinite(newMin)) newMin = 1;
+
+          if (!hasDeadIslands(board, newMin)) {
+            solution.push({ pieceId, shape, col: placeCol, row: placeRow, orientationIndex: oi });
+
+            if (_solveOrdered(board, newRemaining, solution, newMin)) {
+              return true;
+            }
+
+            solution.pop();
+          }
+
+          removePiece(board, pieceId, shape, placeCol, placeRow);
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 function _solve(board, remaining, solution, minPieceSize) {
   const target = findFirstEmpty(board);
   if (!target) return true; // Board full — solved!
