@@ -1319,9 +1319,10 @@ function init() {
   window.addEventListener('resize', refreshCachedLayout);
   window.addEventListener('scroll', refreshBoardOrigin, { passive: true });
 
-  // Prevent page scroll during touch drag on board and tray
+  // Prevent page scroll during active drag (not during tap-to-place 'selected' mode,
+  // which would kill the click event on mobile)
   document.addEventListener('touchmove', (e) => {
-    if (dragState?.isDragging || boardDragState?.isDragging || state.mode === 'selected') {
+    if (dragState?.isDragging || boardDragState?.isDragging) {
       e.preventDefault();
     }
   }, { passive: false });
