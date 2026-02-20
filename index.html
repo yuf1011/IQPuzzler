@@ -45,6 +45,11 @@
           </div>
           <button id="btn-next-challenge" class="challenge-nav-btn" title="Next challenge">&raquo;</button>
         </div>
+        <div class="challenge-actions">
+          <button id="btn-hint" class="hint-btn" title="Use a hint">
+            &#x1F4A1; Hint <span id="hint-counter" class="hint-counter">3/3</span>
+          </button>
+        </div>
         <div id="challenge-progress" class="challenge-progress"></div>
         <div id="challenge-loading" class="challenge-loading hidden">
           <span class="loading-spinner"></span>
@@ -85,6 +90,24 @@
   <!-- Floating action bar for selected piece (mobile-friendly) -->
   <div id="piece-actions" class="piece-actions hidden">
     <button id="btn-action-cancel" class="action-btn action-cancel" title="Deselect">&#x2715; Deselect</button>
+  </div>
+
+  <!-- Hint Confirmation Modal -->
+  <div id="hint-modal" class="hint-modal hidden">
+    <div class="hint-modal-backdrop"></div>
+    <div class="hint-modal-content">
+      <div class="hint-modal-icon">&#x1F4A1;</div>
+      <div class="hint-modal-title">Use a Hint?</div>
+      <div class="hint-modal-body">
+        <p>A hint will reveal the correct placement of one piece on the board.</p>
+        <p class="hint-modal-penalty">&#x23F1; <strong>+5:00</strong> time penalty</p>
+        <p class="hint-modal-remaining" id="hint-modal-remaining">Hints remaining: <strong>3/3</strong></p>
+      </div>
+      <div class="hint-modal-buttons">
+        <button id="btn-hint-cancel" class="hint-modal-btn hint-modal-cancel">Cancel</button>
+        <button id="btn-hint-confirm" class="hint-modal-btn hint-modal-confirm">Use Hint</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="game.js"></script>

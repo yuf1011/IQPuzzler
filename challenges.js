@@ -96,6 +96,13 @@ function buildChallengesFromSolutions(solutions) {
           orientationIndex: p.orientationIndex,
         })),
         playerPieceIds: shuffled.slice(preCount).map(p => p.pieceId),
+        // Full solution for hint feature
+        solution: solution.map(p => ({
+          pieceId: p.pieceId,
+          col: p.col,
+          row: p.row,
+          orientationIndex: p.orientationIndex,
+        })),
       });
 
       challengeId++;

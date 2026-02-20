@@ -101,6 +101,11 @@ const state = {
   progress: {
     completed: {}, // challengeId -> { time: ms, completedAt: ISO }
   },
+
+  // ── P2: Hints ───────────────────────────────────────────────
+  hintsUsed: 0,       // hints used in current challenge
+  maxHints: 3,        // max hints per challenge
+  hintPenaltyMs: 300000, // 5 minutes in ms
 };
 
 function createEmptyBoard() {
@@ -134,6 +139,13 @@ const els = {
   // Floating piece preview
   piecePreview: null,
   piecePreviewShape: null,
+  // Hint
+  hintBtn: null,
+  hintCounter: null,
+  hintModal: null,
+  hintModalRemaining: null,
+  hintConfirmBtn: null,
+  hintCancelBtn: null,
 };
 
 // ── Drag State ──────────────────────────────────────────────
@@ -1133,6 +1145,7 @@ function switchMode(mode) {
   if (mode === 'free') {
     resetGame();
     updateStatus('Free Play mode \u2014 place all pieces to fill the board!');
+    if (els.hintBtn) els.hintBtn.disabled = true;
   } else {
     // Challenge mode — generate challenges off main thread
     if (!state.challengesReady) {
@@ -1184,6 +1197,9 @@ function loadChallenge(challengeId) {
   resetTimer();
   hideGhost();
 
+  // Reset hint state
+  state.hintsUsed = 0;
+
   // Place locked pieces (add to lockedPieces BEFORE doPlace to prevent timer start)
   for (const pp of challenge.prePlaced) {
     const orientations = ORIENTATIONS[pp.pieceId];
@@ -1197,6 +1213,7 @@ function loadChallenge(challengeId) {
   renderTray();
   updateTrayDisplay();
   updateChallengeUI();
+  updateHintUI();
 
   const remaining = PIECES.length - challenge.prePlaced.length;
   updateStatus(`Challenge #${challengeId} \u2014 place ${remaining} pieces to complete the puzzle!`);
@@ -1231,6 +1248,120 @@ function navigateChallenge(delta) {
   const newIdx = currentIdx + delta;
   if (newIdx >= 0 && newIdx < challenges.length) {
     loadChallenge(challenges[newIdx].id);
+  }
+}
+
+// =====================================================================
+//  HINT SYSTEM
+// =====================================================================
+
+const HINT_PENALTY_MS = 300000; // 5 minutes
+const MAX_HINTS = 3;
+
+function updateHintUI() {
+  const remaining = MAX_HINTS - state.hintsUsed;
+  if (els.hintCounter) {
+    els.hintCounter.textContent = `${remaining}/${MAX_HINTS}`;
+  }
+  if (els.hintBtn) {
+    els.hintBtn.disabled = remaining <= 0 || state.gameMode !== 'challenge';
+  }
+}
+
+function showHintModal() {
+  if (state.gameMode !== 'challenge' || !state.currentChallenge) return;
+  if (state.hintsUsed >= MAX_HINTS) {
+    updateStatus('No hints remaining for this challenge.', 'error');
+    return;
+  }
+
+  // Find if there are unplaced pieces from the solution
+  const unplaced = findUnplacedHintPiece();
+  if (!unplaced) {
+    updateStatus('All pieces are already placed!', 'error');
+    return;
+  }
+
+  const remaining = MAX_HINTS - state.hintsUsed;
+  if (els.hintModalRemaining) {
+    els.hintModalRemaining.innerHTML = `Hints remaining: <strong>${remaining}/${MAX_HINTS}</strong>`;
+  }
+  els.hintModal.classList.remove('hidden');
+}
+
+function hideHintModal() {
+  els.hintModal.classList.add('hidden');
+}
+
+function findUnplacedHintPiece() {
+  if (!state.currentChallenge?.solution) return null;
+
+  // Find a piece that's in the tray (not placed, not locked)
+  for (const solPiece of state.currentChallenge.solution) {
+    if (state.tray.has(solPiece.pieceId) && !state.lockedPieces.has(solPiece.pieceId)) {
+      return solPiece;
+    }
+  }
+  return null;
+}
+
+function useHint() {
+  hideHintModal();
+
+  if (state.hintsUsed >= MAX_HINTS) return;
+
+  const hintPiece = findUnplacedHintPiece();
+  if (!hintPiece) {
+    updateStatus('No pieces left to hint!', 'error');
+    return;
+  }
+
+  // Deselect current piece first
+  if (state.selected) deselectPiece();
+
+  // Apply time penalty
+  state.hintsUsed++;
+
+  // If timer hasn't started, start it first then add penalty
+  if (!state.timerStarted) {
+    startTimer();
+  }
+  // Add 5 min penalty by shifting the start time back
+  state.timerStartTime -= HINT_PENALTY_MS;
+  updateTimerDisplay();
+
+  // Place the hint piece on the board
+  const orientations = ORIENTATIONS[hintPiece.pieceId];
+  const shape = orientations[hintPiece.orientationIndex] || orientations[0];
+
+  // Add to locked pieces (hint pieces can't be removed)
+  state.lockedPieces.add(hintPiece.pieceId);
+  doPlace(hintPiece.pieceId, shape, hintPiece.col, hintPiece.row, hintPiece.orientationIndex);
+
+  // Update displays
+  updateBoardDisplay();
+  updateTrayDisplay();
+  updateHintUI();
+
+  // Add glow animation to hint-placed cells
+  const piece = PIECE_MAP[hintPiece.pieceId];
+  shape.forEach(([dc, dr]) => {
+    const c = hintPiece.col + dc;
+    const r = hintPiece.row + dr;
+    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+      els.cells[r][c].classList.add('hint-placed');
+      els.cells[r][c].addEventListener('animationend', () => {
+        els.cells[r][c].classList.remove('hint-placed');
+      }, { once: true });
+    }
+  });
+
+  const remaining = MAX_HINTS - state.hintsUsed;
+  updateStatus(`Hint used! Piece ${hintPiece.pieceId} placed. +5:00 penalty. ${remaining} hint${remaining !== 1 ? 's' : ''} remaining.`, 'success');
+
+  // Check win
+  if (isBoardFull()) {
+    showWin();
   }
 }
 
@@ -1367,6 +1498,14 @@ function init() {
   els.piecePreview = document.getElementById('piece-preview');
   els.piecePreviewShape = document.getElementById('piece-preview-shape');
 
+  // Hint system
+  els.hintBtn = document.getElementById('btn-hint');
+  els.hintCounter = document.getElementById('hint-counter');
+  els.hintModal = document.getElementById('hint-modal');
+  els.hintModalRemaining = document.getElementById('hint-modal-remaining');
+  els.hintConfirmBtn = document.getElementById('btn-hint-confirm');
+  els.hintCancelBtn = document.getElementById('btn-hint-cancel');
+
   const previewRotateBtn = document.getElementById('btn-preview-rotate');
   const previewFlipBtn = document.getElementById('btn-preview-flip');
 
@@ -1433,6 +1572,13 @@ function init() {
   // P1: Challenge navigation
   els.prevChallengeBtn.addEventListener('click', () => navigateChallenge(-1));
   els.nextChallengeBtn.addEventListener('click', () => navigateChallenge(1));
+
+  // P2: Hint system
+  els.hintBtn.addEventListener('click', () => showHintModal());
+  els.hintConfirmBtn.addEventListener('click', () => useHint());
+  els.hintCancelBtn.addEventListener('click', () => hideHintModal());
+  // Close modal on backdrop click
+  els.hintModal.querySelector('.hint-modal-backdrop').addEventListener('click', () => hideHintModal());
 
   // Floating action bar: cancel only
   els.actionCancelBtn.addEventListener('click', (e) => { e.stopPropagation(); deselectPiece(); });
