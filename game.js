@@ -423,14 +423,10 @@ function updateGhostShape() {
 
 function positionGhostAt(clientX, clientY) {
   const ghost = els.ghost;
-  if (ghost.style.display === 'none') return;
   if (!state.selected) return;
 
-  const anchorPixelX = state.selected.anchorCol * _cachedStep + _cachedCellSize / 2;
-  const anchorPixelY = state.selected.anchorRow * _cachedStep + _cachedCellSize / 2;
-
-  const x = clientX - anchorPixelX;
-  const y = clientY - anchorPixelY;
+  const x = clientX - state.selected._anchorPx;
+  const y = clientY - state.selected._anchorPy;
   ghost.style.transform = `translate3d(${x}px, ${y}px, 0)`;
 }
 
@@ -527,6 +523,13 @@ function computeAnchor(shape) {
   return { anchorCol: best[0], anchorRow: best[1] };
 }
 
+/** Precompute the pixel offset for the anchor cell. Call after setting anchorCol/anchorRow. */
+function cacheAnchorPixels() {
+  if (!state.selected) return;
+  state.selected._anchorPx = state.selected.anchorCol * _cachedStep + _cachedCellSize / 2;
+  state.selected._anchorPy = state.selected.anchorRow * _cachedStep + _cachedCellSize / 2;
+}
+
 function selectPiece(pieceId) {
   if (!state.tray.has(pieceId)) return;
   // Don't allow selecting locked pieces
@@ -544,6 +547,7 @@ function selectPiece(pieceId) {
   };
   state.mode = 'selected';
 
+  cacheAnchorPixels();
   updateGhostShape();
   updateTrayDisplay();
   updateStatus(`Piece ${pieceId} selected \u2014 click board to place, R to rotate, F to flip`);
@@ -557,6 +561,7 @@ function selectPieceWithOrientation(pieceId, orientationIndex, anchorCol, anchor
   const shape = ORIENTATIONS[pieceId][orientationIndex];
   state.selected = { id: pieceId, orientationIndex, shape, anchorCol, anchorRow };
   state.mode = 'selected';
+  cacheAnchorPixels();
   updateGhostShape();
   updateTrayDisplay();
 }
@@ -595,6 +600,7 @@ function rotateSelected() {
   state.selected.anchorCol = anchorCol;
   state.selected.anchorRow = anchorRow;
 
+  cacheAnchorPixels();
   updateGhostShape();
   updateStatus(`Piece ${state.selected.id} rotated`);
 }
@@ -614,6 +620,7 @@ function flipSelected() {
     state.selected.anchorRow = anchorRow;
   }
 
+  cacheAnchorPixels();
   updateGhostShape();
   updateStatus(`Piece ${state.selected.id} flipped`);
 }
@@ -752,10 +759,23 @@ function handleTrayPointerDown(e) {
 // =====================================================================
 
 function handleDocumentPointerMove(e) {
+  // Use the latest coalesced event for the freshest cursor position.
+  // The browser batches many hardware events into one pointermove;
+  // getCoalescedEvents() lets us grab the last one for minimum latency.
+  let px = e.clientX, py = e.clientY;
+  if (e.getCoalescedEvents) {
+    const coalesced = e.getCoalescedEvents();
+    if (coalesced.length > 0) {
+      const last = coalesced[coalesced.length - 1];
+      px = last.clientX;
+      py = last.clientY;
+    }
+  }
+
   // ── Board drag: initiation ──
   if (boardDragState && !boardDragState.isDragging) {
-    const dx = e.clientX - boardDragState.startX;
-    const dy = e.clientY - boardDragState.startY;
+    const dx = px - boardDragState.startX;
+    const dy = py - boardDragState.startY;
     if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
       boardDragState.isDragging = true;
 
@@ -763,7 +783,6 @@ function handleDocumentPointerMove(e) {
       const placement = state.placed.get(boardDragState.pieceId);
       if (placement) {
         const { orientationIndex, col: placedCol, row: placedRow } = placement;
-        // Anchor = the cell within the shape the user clicked
         const anchorCol = boardDragState.clickedCol - placedCol;
         const anchorRow = boardDragState.clickedRow - placedRow;
 
@@ -779,10 +798,8 @@ function handleDocumentPointerMove(e) {
 
   // ── Board drag: ongoing movement ──
   if (boardDragState?.isDragging) {
-    // Ghost always follows cursor smoothly
-    positionGhostAt(e.clientX, e.clientY);
-    // Board preview snaps to grid independently
-    const boardCell = boardHitTest(e.clientX, e.clientY);
+    positionGhostAt(px, py);
+    const boardCell = boardHitTest(px, py);
     if (boardCell) {
       showBoardPreview(boardCell.col, boardCell.row);
     } else {
@@ -794,8 +811,8 @@ function handleDocumentPointerMove(e) {
 
   // ── Tray drag: initiation ──
   if (dragState && !dragState.isDragging) {
-    const dx = e.clientX - dragState.startX;
-    const dy = e.clientY - dragState.startY;
+    const dx = px - dragState.startX;
+    const dy = py - dragState.startY;
     if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
       dragState.isDragging = true;
       if (state.selected) deselectPiece();
@@ -805,10 +822,8 @@ function handleDocumentPointerMove(e) {
   }
 
   if (dragState?.isDragging) {
-    // Ghost always follows cursor smoothly
-    positionGhostAt(e.clientX, e.clientY);
-    // Board preview snaps to grid independently
-    const boardCell = boardHitTest(e.clientX, e.clientY);
+    positionGhostAt(px, py);
+    const boardCell = boardHitTest(px, py);
     if (boardCell) {
       showBoardPreview(boardCell.col, boardCell.row);
     } else {
@@ -820,8 +835,8 @@ function handleDocumentPointerMove(e) {
 
   // ── Click-select mode: ghost follows cursor ──
   if (state.mode === 'selected') {
-    positionGhostAt(e.clientX, e.clientY);
-    const boardCell = boardHitTest(e.clientX, e.clientY);
+    positionGhostAt(px, py);
+    const boardCell = boardHitTest(px, py);
     if (boardCell) {
       showBoardPreview(boardCell.col, boardCell.row);
     } else {
