@@ -1376,6 +1376,11 @@ function init() {
   previewFlipBtn.addEventListener('click', (e) => { e.stopPropagation(); flipSelected(); });
   // Prevent preview touches from propagating
   els.piecePreview.addEventListener('pointerdown', (e) => e.stopPropagation());
+  // Prevent touch scroll on preview area (iOS Safari doesn't always respect touch-action:none)
+  els.piecePreview.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+  // Prevent action bar touches from scrolling page
+  els.pieceActions.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
   console.log('[game.js] IQ Puzzler Pro initialized!');
 }

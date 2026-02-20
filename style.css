@@ -97,6 +97,10 @@ body {
   border-radius: 12px;
   border: 2px solid rgba(255, 215, 0, 0.3);
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+  touch-action: none; /* prevent touch scroll on preview area */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .piece-preview.hidden {
@@ -742,6 +746,7 @@ body {
   z-index: 1500;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  touch-action: none; /* prevent touch scroll on action bar */
 }
 
 .piece-actions.hidden {
