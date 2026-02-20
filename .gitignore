@@ -1,5 +1,7 @@
 .claude/
 dist/
+node_modules/
+azure-deploy/
 
 .vercel
 .wrangler/

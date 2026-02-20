@@ -128,10 +128,8 @@ const els = {
   prevChallengeBtn: null,
   nextChallengeBtn: null,
   timerValue: null,
-  // Floating action bar
+  // Floating action bar (cancel only)
   pieceActions: null,
-  actionRotateBtn: null,
-  actionFlipBtn: null,
   actionCancelBtn: null,
   // Floating piece preview
   piecePreview: null,
@@ -1291,15 +1289,16 @@ function init() {
   els.nextChallengeBtn = document.getElementById('btn-next-challenge');
   els.timerValue = document.getElementById('timer-value');
 
-  // Floating action bar
+  // Floating action bar (cancel only; rotate/flip are in preview area)
   els.pieceActions = document.getElementById('piece-actions');
-  els.actionRotateBtn = document.getElementById('btn-action-rotate');
-  els.actionFlipBtn = document.getElementById('btn-action-flip');
   els.actionCancelBtn = document.getElementById('btn-action-cancel');
 
   // Floating piece preview
   els.piecePreview = document.getElementById('piece-preview');
   els.piecePreviewShape = document.getElementById('piece-preview-shape');
+
+  const previewRotateBtn = document.getElementById('btn-preview-rotate');
+  const previewFlipBtn = document.getElementById('btn-preview-flip');
 
   // Load saved progress
   loadProgress();
@@ -1365,13 +1364,18 @@ function init() {
   els.prevChallengeBtn.addEventListener('click', () => navigateChallenge(-1));
   els.nextChallengeBtn.addEventListener('click', () => navigateChallenge(1));
 
-  // Floating action bar buttons
-  els.actionRotateBtn.addEventListener('click', (e) => { e.stopPropagation(); rotateSelected(); });
-  els.actionFlipBtn.addEventListener('click', (e) => { e.stopPropagation(); flipSelected(); });
+  // Floating action bar: cancel only
   els.actionCancelBtn.addEventListener('click', (e) => { e.stopPropagation(); deselectPiece(); });
 
   // Prevent action bar touches from propagating to board
   els.pieceActions.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+  // Preview area: tap shape to rotate, buttons for rotate/flip
+  els.piecePreviewShape.addEventListener('click', (e) => { e.stopPropagation(); rotateSelected(); });
+  previewRotateBtn.addEventListener('click', (e) => { e.stopPropagation(); rotateSelected(); });
+  previewFlipBtn.addEventListener('click', (e) => { e.stopPropagation(); flipSelected(); });
+  // Prevent preview touches from propagating
+  els.piecePreview.addEventListener('pointerdown', (e) => e.stopPropagation());
 
   console.log('[game.js] IQ Puzzler Pro initialized!');
 }
