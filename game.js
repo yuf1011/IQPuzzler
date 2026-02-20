@@ -959,8 +959,10 @@ function handleDocumentPointerMove(e) {
       updateGhostShape(true);
       cacheAnchorPixels();
       state.mode = 'dragging';
-      // Hide preview while dragging
+      // Hide preview while dragging — then refresh board origin since
+      // removing the preview element shifts the board position on mobile
       hidePiecePreview();
+      refreshBoardOrigin();
     }
   }
 
@@ -1023,9 +1025,11 @@ function handleDocumentPointerUp(e) {
       _previewDragOccurred = true; // suppress the click-to-rotate that follows pointerup
       suppressNextBoardClick = true;
       hideGhost();
-      clearBoardPreview();
+      // Check preview BEFORE clearing it (clearBoardPreview nulls state.preview)
       if (state.preview?.valid && state.selected) {
-        doPlace(state.selected.id, state.selected.shape, state.preview.col, state.preview.row, state.selected.orientationIndex);
+        const { col, row } = state.preview;
+        clearBoardPreview();
+        doPlace(state.selected.id, state.selected.shape, col, row, state.selected.orientationIndex);
         updateBoardDisplay();
         const pieceName = state.selected.id;
         deselectPiece();
@@ -1036,10 +1040,13 @@ function handleDocumentPointerUp(e) {
           updateStatus(`Piece ${pieceName} placed! ${state.tray.size} pieces remaining.`, 'success');
         }
       } else {
+        clearBoardPreview();
         // Dropped outside valid area — go back to selected mode with preview
         state.mode = 'selected';
         updatePiecePreview();
         showPieceActions();
+        // Refresh board origin since showing preview shifts the board
+        refreshBoardOrigin();
       }
     }
     previewDragState = null;
