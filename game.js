@@ -751,19 +751,6 @@ function handleTrayPointerDown(e) {
 //  INTERACTION — Document-level Pointer (drag + ghost follow)
 // =====================================================================
 
-function positionGhostOnBoard() {
-  if (!state.selected || !state.preview) return;
-  const ghost = els.ghost;
-  if (ghost.style.display === 'none') return;
-
-  // Use cached board origin (recomputed on resize/render)
-  const { col, row } = state.preview;
-
-  const x = _boardOriginX + col * _cachedStep;
-  const y = _boardOriginY + row * _cachedStep;
-  ghost.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-}
-
 function handleDocumentPointerMove(e) {
   // ── Board drag: initiation ──
   if (boardDragState && !boardDragState.isDragging) {
@@ -792,14 +779,15 @@ function handleDocumentPointerMove(e) {
 
   // ── Board drag: ongoing movement ──
   if (boardDragState?.isDragging) {
+    // Ghost always follows cursor smoothly
+    positionGhostAt(e.clientX, e.clientY);
+    // Board preview snaps to grid independently
     const boardCell = boardHitTest(e.clientX, e.clientY);
     if (boardCell) {
       showBoardPreview(boardCell.col, boardCell.row);
-      positionGhostOnBoard();
     } else {
       _lastHoverCol = _lastHoverRow = -1;
       clearBoardPreview();
-      positionGhostAt(e.clientX, e.clientY);
     }
     return;
   }
@@ -817,27 +805,28 @@ function handleDocumentPointerMove(e) {
   }
 
   if (dragState?.isDragging) {
+    // Ghost always follows cursor smoothly
+    positionGhostAt(e.clientX, e.clientY);
+    // Board preview snaps to grid independently
     const boardCell = boardHitTest(e.clientX, e.clientY);
     if (boardCell) {
       showBoardPreview(boardCell.col, boardCell.row);
-      positionGhostOnBoard();
     } else {
       _lastHoverCol = _lastHoverRow = -1;
       clearBoardPreview();
-      positionGhostAt(e.clientX, e.clientY);
     }
     return;
   }
 
+  // ── Click-select mode: ghost follows cursor ──
   if (state.mode === 'selected') {
+    positionGhostAt(e.clientX, e.clientY);
     const boardCell = boardHitTest(e.clientX, e.clientY);
     if (boardCell) {
       showBoardPreview(boardCell.col, boardCell.row);
-      positionGhostOnBoard();
     } else {
       _lastHoverCol = _lastHoverRow = -1;
       clearBoardPreview();
-      positionGhostAt(e.clientX, e.clientY);
     }
   }
 }
