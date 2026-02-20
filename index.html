@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IQ Puzzler Pro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="game-header">
+    <h1><span class="emoji">🧩</span>IQ Puzzler Pro</h1>
+  </header>
+
+  <div class="game-container">
+    <!-- Left: Board -->
+    <div class="board-area">
+      <div id="board-grid" class="board-grid"></div>
+    </div>
+
+    <!-- Right: Sidebar (Tray + Controls) -->
+    <div class="sidebar">
+      <!-- Mode Switcher -->
+      <div class="mode-switcher">
+        <button class="mode-btn active" data-mode="free">Free Play</button>
+        <button class="mode-btn" data-mode="challenge">Challenge</button>
+      </div>
+
+      <!-- Challenge Panel (hidden in Free Play mode) -->
+      <div id="challenge-panel" class="challenge-panel hidden">
+        <div class="challenge-header">
+          <button id="btn-prev-challenge" class="challenge-nav-btn" title="Previous challenge">&laquo;</button>
+          <div class="challenge-info">
+            <span id="challenge-title" class="challenge-title">#1 Starter</span>
+            <span id="challenge-stars" class="challenge-stars"></span>
+          </div>
+          <button id="btn-next-challenge" class="challenge-nav-btn" title="Next challenge">&raquo;</button>
+        </div>
+        <div id="challenge-progress" class="challenge-progress"></div>
+        <div id="challenge-loading" class="challenge-loading hidden">
+          <span class="loading-spinner"></span>
+          Generating challenges...
+        </div>
+      </div>
+
+      <!-- Timer -->
+      <div class="timer-display">
+        <span class="timer-icon">&#9201;</span>
+        <span id="timer-value" class="timer-value">00:00</span>
+      </div>
+
+      <!-- Piece Tray -->
+      <div id="piece-tray" class="piece-tray"></div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button id="btn-rotate">
+          &#x21bb; Rotate
+          <span class="shortcut">R</span>
+        </button>
+        <button id="btn-flip">
+          &#x2194; Flip
+          <span class="shortcut">F</span>
+        </button>
+        <button id="btn-reset">
+          &#x27F2; Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="status-bar" class="status-bar">
+    Click a piece to select it, then click the board to place it.
+  </div>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>
