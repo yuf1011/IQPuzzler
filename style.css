@@ -35,6 +35,10 @@
   padding: 0;
 }
 
+html {
+  touch-action: manipulation; /* disable double-tap zoom globally, keep pinch-zoom & scroll */
+}
+
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg-body);
@@ -45,6 +49,11 @@ body {
   align-items: center;
   user-select: none;
   -webkit-user-select: none;
+}
+
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── Header ────────────────────────────────────────────── */
