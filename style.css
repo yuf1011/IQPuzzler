@@ -85,6 +85,55 @@ body {
   align-items: center;
 }
 
+/* ── Floating Piece Preview (shows selected piece above board) ── */
+.piece-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 20px 6px;
+  margin-top: 8px;
+  background: var(--bg-sidebar);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+  min-height: 50px;
+}
+
+.piece-preview.hidden {
+  display: none;
+}
+
+.piece-preview-shape {
+  display: grid;
+  gap: var(--cell-gap);
+}
+
+.piece-preview-ball {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: 50%;
+  position: relative;
+}
+
+.piece-preview-ball::after {
+  content: '';
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.piece-preview-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 .board-grid {
   display: grid;
   grid-template-columns: repeat(11, var(--cell-size));
@@ -180,7 +229,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 8px;
+  padding: 8px 4px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 8px;
   cursor: pointer;
@@ -189,8 +238,6 @@ body {
     box-shadow var(--transition-fast),
     opacity var(--transition-normal);
   touch-action: none; /* prevent scroll during drag */
-  min-height: 60px;
-  overflow: hidden;
 }
 
 .tray-piece:hover {
@@ -771,13 +818,13 @@ body {
   }
 
   .piece-tray {
-    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 4px;
-    padding: 8px;
+    padding: 6px;
   }
 
   .tray-piece {
-    padding: 4px;
+    padding: 4px 2px;
     gap: 2px;
   }
 
@@ -805,6 +852,11 @@ body {
     font-size: 0.75rem;
     padding: 4px 8px;
     min-height: 28px;
+  }
+
+  .piece-preview {
+    padding: 8px 16px 4px;
+    margin-top: 6px;
   }
 
   .piece-actions {

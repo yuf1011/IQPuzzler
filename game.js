@@ -133,6 +133,9 @@ const els = {
   actionRotateBtn: null,
   actionFlipBtn: null,
   actionCancelBtn: null,
+  // Floating piece preview
+  piecePreview: null,
+  piecePreviewShape: null,
 };
 
 // ── Drag State ──────────────────────────────────────────────
@@ -488,6 +491,46 @@ function hidePieceActions() {
   if (els.pieceActions) els.pieceActions.classList.add('hidden');
 }
 
+// ── Floating Piece Preview (mobile: shows selected piece above board) ──
+
+function updatePiecePreview() {
+  if (!state.selected || !_isTouchDevice) {
+    hidePiecePreview();
+    return;
+  }
+  const piece = PIECE_MAP[state.selected.id];
+  const shape = state.selected.shape;
+  const container = els.piecePreviewShape;
+  if (!container) return;
+
+  container.innerHTML = '';
+  const maxCol = Math.max(...shape.map(([c]) => c));
+  const maxRow = Math.max(...shape.map(([, r]) => r));
+
+  container.style.gridTemplateColumns = `repeat(${maxCol + 1}, var(--cell-size))`;
+  container.style.gridTemplateRows = `repeat(${maxRow + 1}, var(--cell-size))`;
+
+  const occupied = new Set(shape.map(([c, r]) => `${c},${r}`));
+  for (let r = 0; r <= maxRow; r++) {
+    for (let c = 0; c <= maxCol; c++) {
+      const cell = document.createElement('div');
+      if (occupied.has(`${c},${r}`)) {
+        cell.className = 'piece-preview-ball';
+        cell.style.background = makeBallGradient(piece.color);
+      } else {
+        cell.style.width = 'var(--cell-size)';
+        cell.style.height = 'var(--cell-size)';
+      }
+      container.appendChild(cell);
+    }
+  }
+  els.piecePreview.classList.remove('hidden');
+}
+
+function hidePiecePreview() {
+  if (els.piecePreview) els.piecePreview.classList.add('hidden');
+}
+
 // ── Board Preview ───────────────────────────────────────────
 
 function anchoredOrigin(hoverCol, hoverRow) {
@@ -605,6 +648,7 @@ function selectPiece(pieceId) {
   updateGhostShape();
   updateTrayDisplay();
   showPieceActions();
+  updatePiecePreview();
   updateStatus(_isTouchDevice
     ? `Piece ${pieceId} selected \u2014 rotate/flip below, then tap board to place`
     : `Piece ${pieceId} selected \u2014 click board to place, R to rotate, F to flip`);
@@ -622,6 +666,7 @@ function selectPieceWithOrientation(pieceId, orientationIndex, anchorCol, anchor
   updateGhostShape();
   updateTrayDisplay();
   showPieceActions();
+  updatePiecePreview();
 }
 
 function deselectPiece() {
@@ -636,6 +681,7 @@ function deselectPiece() {
   _lastHoverCol = _lastHoverRow = -1;
   hideGhost();
   hidePieceActions();
+  hidePiecePreview();
   clearBoardPreview();
   updateTrayDisplay();
   updateStatus(_isTouchDevice
@@ -667,6 +713,7 @@ function rotateSelected() {
   cacheAnchorPixels();
   updateGhostShape();
   updateTrayPieceShape(state.selected.id, newShape);
+  updatePiecePreview();
   updateStatus(`Piece ${state.selected.id} rotated`);
 }
 
@@ -688,6 +735,7 @@ function flipSelected() {
   cacheAnchorPixels();
   updateGhostShape();
   updateTrayPieceShape(state.selected.id, state.selected.shape);
+  updatePiecePreview();
   updateStatus(`Piece ${state.selected.id} flipped`);
 }
 
@@ -1248,6 +1296,10 @@ function init() {
   els.actionRotateBtn = document.getElementById('btn-action-rotate');
   els.actionFlipBtn = document.getElementById('btn-action-flip');
   els.actionCancelBtn = document.getElementById('btn-action-cancel');
+
+  // Floating piece preview
+  els.piecePreview = document.getElementById('piece-preview');
+  els.piecePreviewShape = document.getElementById('piece-preview-shape');
 
   // Load saved progress
   loadProgress();
