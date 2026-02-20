@@ -139,6 +139,8 @@ const els = {
 // ── Drag State ──────────────────────────────────────────────
 let dragState = null; // { startX, startY, pieceId, isDragging } — tray drag
 let boardDragState = null; // { startX, startY, pieceId, isDragging, clickedCol, clickedRow } — board drag
+let previewDragState = null; // { startX, startY, isDragging } — preview shape drag to board
+let _previewDragOccurred = false; // flag to suppress click-to-rotate after drag
 
 // =====================================================================
 //  BOARD LOGIC (pure, no DOM)
@@ -431,11 +433,12 @@ function createGhost() {
   els.ghost = ghost;
 }
 
-function updateGhostShape() {
+function updateGhostShape(forceShow) {
   if (!state.selected) return;
   // On touch devices, don't show ghost — it's hidden under the finger
-  // and the tray piece already shows the current orientation
-  if (_isTouchDevice) return;
+  // and the tray piece already shows the current orientation.
+  // Exception: forceShow=true when dragging from preview to board.
+  if (_isTouchDevice && !forceShow) return;
 
   const ghost = els.ghost;
   ghost.innerHTML = '';
@@ -677,6 +680,7 @@ function deselectPiece() {
   state.preview = null;
   state.mode = 'idle';
   _lastHoverCol = _lastHoverRow = -1;
+  previewDragState = null;
   hideGhost();
   hidePieceActions();
   hidePiecePreview();
@@ -945,6 +949,34 @@ function handleDocumentPointerMove(e) {
     return;
   }
 
+  // ── Preview drag: initiation (drag from preview shape onto board) ──
+  if (previewDragState && !previewDragState.isDragging) {
+    const dx = px - previewDragState.startX;
+    const dy = py - previewDragState.startY;
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      previewDragState.isDragging = true;
+      // Show ghost even on touch — finger is now dragging
+      updateGhostShape(true);
+      cacheAnchorPixels();
+      state.mode = 'dragging';
+      // Hide preview while dragging
+      hidePiecePreview();
+    }
+  }
+
+  // ── Preview drag: ongoing movement ──
+  if (previewDragState?.isDragging) {
+    positionGhostAt(px, py);
+    const boardCell = boardHitTest(px, py);
+    if (boardCell) {
+      showBoardPreview(boardCell.col, boardCell.row);
+    } else {
+      _lastHoverCol = _lastHoverRow = -1;
+      clearBoardPreview();
+    }
+    return;
+  }
+
   // ── Click-select mode: ghost follows cursor ──
   if (state.mode === 'selected') {
     positionGhostAt(px, py);
@@ -982,6 +1014,35 @@ function handleDocumentPointerUp(e) {
       }
     }
     boardDragState = null;
+    return;
+  }
+
+  // ── Preview drag end (drag from preview shape onto board) ──
+  if (previewDragState) {
+    if (previewDragState.isDragging) {
+      _previewDragOccurred = true; // suppress the click-to-rotate that follows pointerup
+      suppressNextBoardClick = true;
+      hideGhost();
+      clearBoardPreview();
+      if (state.preview?.valid && state.selected) {
+        doPlace(state.selected.id, state.selected.shape, state.preview.col, state.preview.row, state.selected.orientationIndex);
+        updateBoardDisplay();
+        const pieceName = state.selected.id;
+        deselectPiece();
+
+        if (isBoardFull()) {
+          showWin();
+        } else {
+          updateStatus(`Piece ${pieceName} placed! ${state.tray.size} pieces remaining.`, 'success');
+        }
+      } else {
+        // Dropped outside valid area — go back to selected mode with preview
+        state.mode = 'selected';
+        updatePiecePreview();
+        showPieceActions();
+      }
+    }
+    previewDragState = null;
     return;
   }
 
@@ -1112,6 +1173,7 @@ function loadChallenge(challengeId) {
   state.mode = 'idle';
   dragState = null;
   boardDragState = null;
+  previewDragState = null;
   resetTimer();
   hideGhost();
 
@@ -1253,6 +1315,7 @@ function resetGame() {
   state.mode = 'idle';
   dragState = null;
   boardDragState = null;
+  previewDragState = null;
   resetTimer();
 
   els.boardGrid.classList.remove('win');
@@ -1321,7 +1384,7 @@ function init() {
   // Prevent page scroll during active drag (not during tap-to-place 'selected' mode,
   // which would kill the click event on mobile)
   document.addEventListener('touchmove', (e) => {
-    if (dragState?.isDragging || boardDragState?.isDragging) {
+    if (dragState?.isDragging || boardDragState?.isDragging || previewDragState?.isDragging) {
       e.preventDefault();
     }
   }, { passive: false });
@@ -1370,12 +1433,32 @@ function init() {
   // Prevent action bar touches from propagating to board
   els.pieceActions.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-  // Preview area: tap shape to rotate, buttons for rotate/flip
-  els.piecePreviewShape.addEventListener('click', (e) => { e.stopPropagation(); rotateSelected(); });
+  // Preview area: tap shape to rotate, OR drag shape to board
+  els.piecePreviewShape.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // Don't rotate if this click is the end of a drag gesture
+    if (_previewDragOccurred) { _previewDragOccurred = false; return; }
+    rotateSelected();
+  });
+  els.piecePreviewShape.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    if (!state.selected) return;
+    previewDragState = {
+      startX: e.clientX,
+      startY: e.clientY,
+      isDragging: false,
+    };
+  });
   previewRotateBtn.addEventListener('click', (e) => { e.stopPropagation(); rotateSelected(); });
   previewFlipBtn.addEventListener('click', (e) => { e.stopPropagation(); flipSelected(); });
-  // Prevent preview touches from propagating
-  els.piecePreview.addEventListener('pointerdown', (e) => e.stopPropagation());
+  // Prevent preview button/container touches from propagating
+  previewRotateBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  previewFlipBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  els.piecePreview.addEventListener('pointerdown', (e) => {
+    // Only stop propagation for non-shape areas (buttons are handled above)
+    // Let shape pointerdown through for drag initiation
+    if (!e.target.closest('.piece-preview-shape')) e.stopPropagation();
+  });
   // Prevent touch scroll on preview area (iOS Safari doesn't always respect touch-action:none)
   els.piecePreview.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 

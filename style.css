@@ -138,10 +138,13 @@ body {
 .piece-preview-shape {
   display: grid;
   gap: var(--cell-gap);
-  cursor: pointer; /* tappable for rotate */
-  touch-action: manipulation;
+  cursor: pointer; /* tappable for rotate, draggable to board */
+  cursor: grab;
+  touch-action: none; /* allow drag gesture, prevent scroll */
   -webkit-tap-highlight-color: transparent;
   padding: 4px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .piece-preview-ball {
