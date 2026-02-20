@@ -178,6 +178,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 8px;
   background: rgba(255, 255, 255, 0.04);
@@ -188,6 +189,8 @@ body {
     box-shadow var(--transition-fast),
     opacity var(--transition-normal);
   touch-action: none; /* prevent scroll during drag */
+  min-height: 60px;
+  overflow: hidden;
 }
 
 .tray-piece:hover {

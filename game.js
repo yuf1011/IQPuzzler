@@ -16,6 +16,7 @@ const STORAGE_KEY = 'iqpuzzler-progress';
 let _cachedCellSize = 0;
 let _cachedCellGap = 0;
 let _cachedStep = 0;
+let _isTouchDevice = false;
 
 function refreshCachedLayout() {
   const style = getComputedStyle(document.documentElement);
@@ -385,6 +386,40 @@ function updateTrayDisplay() {
   }
 }
 
+/**
+ * Re-render a tray piece's shape grid to show a different orientation.
+ * Used when rotating/flipping a selected piece so the user sees the change in the tray.
+ */
+function updateTrayPieceShape(pieceId, shape) {
+  const container = els.trayPieces[pieceId];
+  if (!container) return;
+
+  const piece = PIECE_MAP[pieceId];
+  const shapeGrid = container.querySelector('.tray-shape');
+  if (!shapeGrid) return;
+
+  shapeGrid.innerHTML = '';
+  const maxCol = Math.max(...shape.map(([c]) => c));
+  const maxRow = Math.max(...shape.map(([, r]) => r));
+
+  shapeGrid.style.gridTemplateColumns = `repeat(${maxCol + 1}, var(--tray-cell-size))`;
+  shapeGrid.style.gridTemplateRows = `repeat(${maxRow + 1}, var(--tray-cell-size))`;
+
+  const occupied = new Set(shape.map(([c, r]) => `${c},${r}`));
+  for (let r = 0; r <= maxRow; r++) {
+    for (let c = 0; c <= maxCol; c++) {
+      const cell = document.createElement('div');
+      if (occupied.has(`${c},${r}`)) {
+        cell.className = 'tray-ball';
+        cell.style.background = makeBallGradient(piece.color);
+      } else {
+        cell.className = 'tray-empty';
+      }
+      shapeGrid.appendChild(cell);
+    }
+  }
+}
+
 // ── Ghost Piece ─────────────────────────────────────────────
 
 function createGhost() {
@@ -397,6 +432,10 @@ function createGhost() {
 
 function updateGhostShape() {
   if (!state.selected) return;
+  // On touch devices, don't show ghost — it's hidden under the finger
+  // and the tray piece already shows the current orientation
+  if (_isTouchDevice) return;
+
   const ghost = els.ghost;
   ghost.innerHTML = '';
 
@@ -566,7 +605,9 @@ function selectPiece(pieceId) {
   updateGhostShape();
   updateTrayDisplay();
   showPieceActions();
-  updateStatus(`Piece ${pieceId} selected \u2014 click board to place, R to rotate, F to flip`);
+  updateStatus(_isTouchDevice
+    ? `Piece ${pieceId} selected \u2014 rotate/flip below, then tap board to place`
+    : `Piece ${pieceId} selected \u2014 click board to place, R to rotate, F to flip`);
 }
 
 /**
@@ -584,6 +625,11 @@ function selectPieceWithOrientation(pieceId, orientationIndex, anchorCol, anchor
 }
 
 function deselectPiece() {
+  // Reset tray piece shape back to default orientation before clearing selection
+  if (state.selected) {
+    const piece = PIECE_MAP[state.selected.id];
+    updateTrayPieceShape(state.selected.id, piece.shape);
+  }
   state.selected = null;
   state.preview = null;
   state.mode = 'idle';
@@ -592,8 +638,8 @@ function deselectPiece() {
   hidePieceActions();
   clearBoardPreview();
   updateTrayDisplay();
-  updateStatus(state.gameMode === 'challenge'
-    ? 'Click a piece to select it, then click the board to place it.'
+  updateStatus(_isTouchDevice
+    ? 'Tap a piece to select it, then tap the board to place it.'
     : 'Click a piece to select it, then click the board to place it.');
 }
 
@@ -620,6 +666,7 @@ function rotateSelected() {
 
   cacheAnchorPixels();
   updateGhostShape();
+  updateTrayPieceShape(state.selected.id, newShape);
   updateStatus(`Piece ${state.selected.id} rotated`);
 }
 
@@ -640,6 +687,7 @@ function flipSelected() {
 
   cacheAnchorPixels();
   updateGhostShape();
+  updateTrayPieceShape(state.selected.id, state.selected.shape);
   updateStatus(`Piece ${state.selected.id} flipped`);
 }
 
@@ -1209,6 +1257,9 @@ function init() {
   renderTray();
   createGhost();
   refreshCachedLayout();
+
+  // Detect touch device
+  _isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
   // ── Event Listeners ────────────────────────────────────
 
