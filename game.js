@@ -1372,17 +1372,6 @@ function init() {
   // Prevent action bar touches from propagating to board
   els.pieceActions.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-  // Double-tap on board to rotate selected piece (mobile-friendly)
-  let _lastTapTime = 0;
-  els.boardGrid.addEventListener('click', (e) => {
-    const now = Date.now();
-    if (now - _lastTapTime < 350 && state.selected) {
-      rotateSelected();
-      e.stopPropagation();
-    }
-    _lastTapTime = now;
-  }, true); // capture phase so it runs before handleBoardClick
-
   console.log('[game.js] IQ Puzzler Pro initialized!');
 }
 
